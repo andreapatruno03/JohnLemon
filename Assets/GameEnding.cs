@@ -11,6 +11,7 @@ public class GameEnding : MonoBehaviour
 
     bool m_IsPlayerAtExit;
     float m_Timer;
+
     void OnTriggerEnter (Collider other)
     {
         if (other.gameObject == player)
