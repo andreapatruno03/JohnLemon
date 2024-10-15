@@ -1,0 +1,193 @@
+Per implementare l'intelligenza artificiale nel tuo progetto "John Lemon's Haunted House", dovrai adattare il codice che ti ho mostrato agli asset e alla struttura del progetto esistente. Ti guiderò passo passo per integrare l'IA che controlla il movimento, le decisioni e le strategie degli NPC nel contesto di un progetto Unity basato su John Lemon.
+
+1. Analizza la Struttura del Progetto
+Nel tutorial di John Lemon, probabilmente hai già degli NPC, quindi il primo passo è analizzare come sono strutturati. Supponiamo che gli NPC siano già presenti nella scena con script che controllano il loro movimento e comportamento di base.
+
+2. Creare un Componente di Movimento
+Se gli NPC non hanno già un sistema di movimento, puoi aggiungere uno script per gestire il loro movimento, come quello che ti ho fornito. Ecco un esempio adattato:
+
+Crea un nuovo script chiamato NPCMovement:
+
+csharp
+Copia el codi
+using UnityEngine;
+
+public class NPCMovement : MonoBehaviour
+{
+    public float speed = 2f;
+    public Transform[] waypoints;
+    private int currentWaypoint = 0;
+
+    // Movimento verso il prossimo waypoint
+    public void MoveToNextWaypoint()
+    {
+        if (waypoints.Length == 0) return;
+
+        Transform target = waypoints[currentWaypoint];
+        Vector3 direction = (target.position - transform.position).normalized;
+        transform.position += direction * speed * Time.deltaTime;
+
+        if (Vector3.Distance(transform.position, target.position) < 0.5f)
+        {
+            currentWaypoint = (currentWaypoint + 1) % waypoints.Length;
+        }
+    }
+
+    // Movimento verso il giocatore
+    public void MoveTowardsPlayer(Transform player)
+    {
+        Vector3 direction = (player.position - transform.position).normalized;
+        transform.position += direction * speed * Time.deltaTime;
+    }
+}
+Aggiungi questo script agli NPC della tua scena:
+
+Seleziona gli NPC nel progetto (magari i fantasmi o le guardie).
+Aggiungi lo script NPCMovement tramite il pulsante "Add Component" nell'Inspector.
+Configura i waypoint:
+
+Aggiungi dei game object vuoti nella scena per definire i waypoint (ad esempio, per la pattuglia).
+Assegna questi game object all'array waypoints nello script NPCMovement.
+3. Implementare la Logica della FSM
+Ora, creiamo la logica della FSM per il comportamento degli NPC.
+
+Crea un nuovo script chiamato NPCBehavior:
+
+csharp
+Copia el codi
+using UnityEngine;
+
+public enum NPCState
+{
+    Patrolling,
+    Chasing,
+    Attacking,
+    Fleeing
+}
+
+public class NPCBehavior : MonoBehaviour
+{
+    public NPCState currentState = NPCState.Patrolling;
+    public NPCMovement movement;
+    public Transform player;  // Riferimento al giocatore
+    public float chaseDistance = 5f;
+    public float attackDistance = 1.5f;
+    public int health = 100;
+
+    void Update()
+    {
+        switch (currentState)
+        {
+            case NPCState.Patrolling:
+                Patrol();
+                break;
+            case NPCState.Chasing:
+                Chase();
+                break;
+            case NPCState.Attacking:
+                Attack();
+                break;
+            case NPCState.Fleeing:
+                Flee();
+                break;
+        }
+    }
+
+    void Patrol()
+    {
+        movement.MoveToNextWaypoint();
+        if (Vector3.Distance(transform.position, player.position) < chaseDistance)
+        {
+            currentState = NPCState.Chasing;
+        }
+    }
+
+    void Chase()
+    {
+        movement.MoveTowardsPlayer(player);
+        if (Vector3.Distance(transform.position, player.position) < attackDistance)
+        {
+            currentState = NPCState.Attacking;
+        }
+        else if (Vector3.Distance(transform.position, player.position) > chaseDistance)
+        {
+            currentState = NPCState.Patrolling;
+        }
+    }
+
+    void Attack()
+    {
+        // Aggiungi qui la logica di attacco
+        Debug.Log("Attacco al giocatore!");
+
+        if (Vector3.Distance(transform.position, player.position) > attackDistance)
+        {
+            currentState = NPCState.Chasing;
+        }
+    }
+
+    void Flee()
+    {
+        Vector3 direction = (transform.position - player.position).normalized;
+        transform.position += direction * movement.speed * Time.deltaTime;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        health -= damage;
+        if (health < 20)
+        {
+            currentState = NPCState.Fleeing;
+        }
+    }
+}
+Aggiungi lo script NPCBehavior agli NPC:
+
+Seleziona gli NPC e aggiungi lo script NPCBehavior.
+Collega lo script NPCMovement (che hai aggiunto prima) al campo movement nello script NPCBehavior.
+Imposta il campo player puntando all'oggetto giocatore (John Lemon).
+4. Gestione del Giocatore (John Lemon)
+Se il progetto segue il tutorial originale, il giocatore (John Lemon) dovrebbe già avere uno script per il controllo del movimento. Se il giocatore viene rilevato dagli NPC, puoi simulare l'attacco come riduzione della vita o altri effetti visivi.
+
+Se vuoi simulare un attacco base, puoi aggiungere un metodo TakeDamage allo script del giocatore, che l’NPC può chiamare quando è nello stato di attacco:
+
+csharp
+Copia el codi
+public class PlayerHealth : MonoBehaviour
+{
+    public int health = 100;
+
+    public void TakeDamage(int damage)
+    {
+        health -= damage;
+        if (health <= 0)
+        {
+            // Logica di morte del giocatore
+            Debug.Log("John Lemon è stato sconfitto!");
+        }
+    }
+}
+Poi nell'NPC, nello stato di attacco, chiami TakeDamage:
+
+csharp
+Copia el codi
+void Attack()
+{
+    player.GetComponent<PlayerHealth>().TakeDamage(10);
+}
+5. Test e Debug
+Configura la scena: Assicurati che tutti i riferimenti siano collegati correttamente.
+
+Imposta i waypoint per la pattuglia.
+Collega il giocatore all'NPC.
+Debug: Aggiungi dei Debug.Log nelle transizioni di stato per verificare che l'NPC stia passando correttamente da uno stato all'altro.
+
+Bilanciamento: Modifica valori come la velocità di movimento, la distanza di inseguimento e i danni per bilanciare il gioco e rendere l'IA interessante.
+
+6. Espansioni Future
+Una volta che l'IA di base funziona, puoi espanderla con comportamenti più avanzati, come:
+
+Strategie di gruppo: Gli NPC possono collaborare per accerchiare o attaccare il giocatore.
+Sensori più complessi: Implementare campi visivi con Physics.Raycast o altre tecniche di rilevamento.
+Stati aggiuntivi: Aggiungere stati come "Nascondersi" o "Chiamare rinforzi" per rendere l'IA più complessa.
+Con questa implementazione, avrai una IA funzionante e basata sugli stati nel progetto di John Lemon, che puoi espandere e migliorare man mano. Se hai bisogno di aiuto con aspetti specifici o debug, fammi sapere!
