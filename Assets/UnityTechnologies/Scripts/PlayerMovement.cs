@@ -12,10 +12,12 @@ public class PlayerMovement : MonoBehaviour
 
     // Start is called before the first frame update
     void Start()
-    {
-        m_Animator = GetComponent<Animator> (); //Get a reference to a component of type 'Animator', and assign it to the variable 
-        m_Rigidbody = GetComponent<Rigidbody> (); //riferimento al RigidBody, mi serve per applicare il movimento al corpo del personaggio
-    }
+{
+    m_Animator = GetComponent<Animator>();
+    m_Rigidbody = GetComponent<Rigidbody>();
+
+}
+
 
     // Update is called once per frame
     void Update()
@@ -23,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
         float horizontal = Input.GetAxis ("Horizontal");
         float vertical = Input.GetAxis ("Vertical");
 
-        m_Movement.Set(horizontal, 0f, vertical); //f perchè è un float
+        m_Movement.Set(-horizontal, 0f, -vertical); //f perchè è un float
         m_Movement.Normalize (); //per mantenere la stessa direzione, cambiando il magnitudo
 
         bool hasHorizontalInput = !Mathf.Approximately (horizontal, 0f);//controllo se ho input orizzonale
@@ -31,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
         bool isWalking = hasHorizontalInput || hasVerticalInput;
         m_Animator.SetBool ("IsWalking", isWalking);
 
-        Vector3 desiredForward = Vector3.RotateTowards (transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
+        Vector3 desiredForward = Vector3.RotateTowards(transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
         m_Rotation = Quaternion.LookRotation (desiredForward); //crea rotazione nella direzione del parametro scelto
     }
 

@@ -6,21 +6,14 @@ namespace CityPeople
 {
     public class CityPeople : MonoBehaviour
     {
-        private AnimationClip[] myClips;
         private Animator animator;
-
         public float rotationSpeed = 10f; // Velocità di rotazione
+        public float movementSpeed = 3f; // Velocità di movimento
         private Vector3 lastDirection = Vector3.zero; // Direzione precedente
 
         void Start()
         {
             animator = GetComponent<Animator>();
-            if (animator != null)
-            {
-                myClips = animator.runtimeAnimatorController.animationClips;
-                PlayAnyClip();
-                StartCoroutine(ShuffleClips());
-            }
         }
 
         void Update()
@@ -28,33 +21,32 @@ namespace CityPeople
             // Ottieni la direzione di movimento dai tasti di input
             Vector3 direction = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
-            // Verifica che ci sia un movimento
+            // Controlla se c'è movimento
             if (direction.magnitude > 0.1f)
             {
-                // Confronta la nuova direzione con quella precedente
-                if (Vector3.Dot(direction, lastDirection) < 0)
+                // Movimento del personaggio
+                transform.Translate(Vector3.forward * movementSpeed * Time.deltaTime);
+
+                // Rotazione verso la direzione del movimento
+                Quaternion targetRotation = Quaternion.LookRotation(-direction, Vector3.up);
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+                // Attiva l'animazione di camminata
+                if (animator != null)
                 {
-                    // Ruota di 180 gradi se la direzione è opposta
-                    transform.Rotate(0, 180f, 0);
+                    animator.SetBool("isWalking", true);
                 }
 
                 // Aggiorna la direzione precedente
                 lastDirection = direction;
             }
-        }
-
-        void PlayAnyClip()
-        {
-            var cl = myClips[Random.Range(0, myClips.Length)];
-            animator.CrossFadeInFixedTime(cl.name, 1.0f, -1, Random.value * cl.length);
-        }
-
-        IEnumerator ShuffleClips()
-        {
-            while (true)
+            else
             {
-                yield return new WaitForSeconds(15.0f + Random.value * 5.0f);
-                PlayAnyClip();
+                // Ferma l'animazione di camminata
+                if (animator != null)
+                {
+                    animator.SetBool("isWalking", false);
+                }
             }
         }
     }
