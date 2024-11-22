@@ -67,12 +67,14 @@
     <Compile Include="Assets\DenysAlmaral\CityPeopleLite\Demo_Scenes\Scripts\CityPeople.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\WayPointPatrol.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\LightFlicker.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\IA_NPC.cs" />
     <Compile Include="Assets\UnityTechnologies\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\GameEnding.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\SimpleAI.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\Observer.cs" />
     <Compile Include="Assets\CameraFollow.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\PlayerMovement.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\CampoVisivo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\UnityTechnologies\Shaders\Toon\CustomLighting.hlsl" />
