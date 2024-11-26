@@ -14,7 +14,6 @@ public class GameEnding : MonoBehaviour
     private bool m_IsPlayerAtExit; // Flag per verificare se il giocatore è all'uscita
     private bool m_IsPlayerCaught; // Flag per verificare se il giocatore è catturato
     private float m_Timer; // Timer per gestire il fade
-    private bool m_HasGameEnded = false; // Flag per evitare ripetizioni
 
     void Start()
     {
@@ -28,7 +27,6 @@ public class GameEnding : MonoBehaviour
         if (other.gameObject == player)
         {
             m_IsPlayerAtExit = true;
-            DisablePlayerMovement(); // Blocca il movimento del giocatore
         }
     }
 
@@ -36,7 +34,6 @@ public class GameEnding : MonoBehaviour
     {
         // Metodo per segnare il giocatore come catturato
         m_IsPlayerCaught = true;
-        DisablePlayerMovement(); // Blocca il movimento del giocatore
     }
 
     void Update()
@@ -54,8 +51,6 @@ public class GameEnding : MonoBehaviour
 
     void EndLevel(CanvasGroup imageCanvasGroup, bool doRestart)
     {
-        if (m_HasGameEnded) return; // Evita di eseguire più volte
-
         // Incrementa il timer
         m_Timer += Time.deltaTime;
 
@@ -65,8 +60,6 @@ public class GameEnding : MonoBehaviour
         // Controlla se il timer ha superato la durata totale
         if (m_Timer > fadeDuration + displayImageDuration)
         {
-            m_HasGameEnded = true;
-
             if (doRestart)
             {
                 // Riavvia la scena
@@ -78,21 +71,6 @@ public class GameEnding : MonoBehaviour
                 Debug.Log("Hai vinto!");
                 Application.Quit();
             }
-        }
-    }
-
-    void DisablePlayerMovement()
-    {
-        // Disattiva tutti i componenti di movimento del giocatore
-        if (player.TryGetComponent(out MonoBehaviour movementScript))
-        {
-            movementScript.enabled = false; // Disabilita lo script di movimento
-        }
-
-        if (player.TryGetComponent(out Rigidbody rb))
-        {
-            rb.velocity = Vector3.zero; // Ferma il movimento
-            rb.isKinematic = true; // Rende il Rigidbody statico
         }
     }
 }

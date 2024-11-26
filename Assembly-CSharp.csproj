@@ -70,11 +70,13 @@
     <Compile Include="Assets\UnityTechnologies\Scripts\PlayerHealth.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\IA_NPC.cs" />
     <Compile Include="Assets\UnityTechnologies\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\Preside_AI.cs" />
     <Compile Include="Assets\GameEnding.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\SimpleAI.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\Observer.cs" />
     <Compile Include="Assets\CameraFollow.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\PlayerMovement.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\NPC_Alert.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\CampoVisivo.cs" />
   </ItemGroup>
   <ItemGroup>

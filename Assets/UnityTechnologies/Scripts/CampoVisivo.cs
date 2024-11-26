@@ -21,23 +21,8 @@ public class FieldOfView : MonoBehaviour
     public Transform player; // Riferimento al giocatore
     public bool CanSeeTarget { get; private set; } // Controlla se vede il target
 
-    private Animator m_Animator;
-    private Rigidbody m_Rigidbody;
     private Vector3 m_Movement;
     private Quaternion m_Rotation = Quaternion.identity;
-
-    void Start()
-    {
-        // Recupera i componenti
-        m_Animator = GetComponent<Animator>();
-        m_Rigidbody = GetComponent<Rigidbody>();
-
-        // Controlla i riferimenti nulli
-        if (m_Animator == null)
-            Debug.LogError("Animator non trovato sul GameObject!");
-        if (m_Rigidbody == null)
-            Debug.LogError("Rigidbody non trovato sul GameObject!");
-    }
 
     void Update()
     {
@@ -47,10 +32,6 @@ public class FieldOfView : MonoBehaviour
         if (CanSeeTarget)
         {
             MoveTowardsPlayer();
-        }
-        else
-        {
-            StopMovement();
         }
     }
 
@@ -64,16 +45,14 @@ public class FieldOfView : MonoBehaviour
             Transform targetTransform = target.transform;
             Vector3 directionToTarget = (targetTransform.position - transform.position).normalized;
 
-            // Verifica se il target è nell'angolo di visione
             if (Vector3.Angle(transform.forward, directionToTarget) < viewAngle / 2)
             {
                 float distanceToTarget = Vector3.Distance(transform.position, targetTransform.position);
 
-                // Controlla gli ostacoli tra NPC e il target
                 if (!Physics.Raycast(transform.position, directionToTarget, distanceToTarget, obstacleMask))
                 {
                     CanSeeTarget = true;
-                    player = targetTransform; // Salva il riferimento al giocatore
+                    player = targetTransform;
                     Debug.Log("Giocatore rilevato!");
                     break;
                 }
@@ -90,64 +69,19 @@ public class FieldOfView : MonoBehaviour
     {
         if (player == null)
         {
-            Debug.LogError("Player non assegnato!");
+            Debug.LogWarning("Player non assegnato!");
             return;
         }
 
         Vector3 direction = (player.position - transform.position).normalized;
         m_Movement = direction * moveSpeed * Time.deltaTime;
 
-        bool isWalking = m_Movement.magnitude > 0f;
-        m_Animator?.SetBool("isWalking", isWalking);
-
+        // Rotazione verso il giocatore
         Vector3 desiredForward = Vector3.RotateTowards(transform.forward, direction, turnSpeed * Time.deltaTime, 0f);
         m_Rotation = Quaternion.LookRotation(desiredForward);
 
-        m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement);
-        m_Rigidbody.MoveRotation(m_Rotation);
+        // Movimento tramite Transform
+        transform.position += m_Movement;
+        transform.rotation = m_Rotation;
     }
-
-    private void StopMovement()
-    {
-        m_Movement = Vector3.zero;
-        m_Animator?.SetBool("isWalking", false);
-    }
-
-    void OnAnimatorMove()
-    {
-        if (CanSeeTarget)
-        {
-            m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement * m_Animator.deltaPosition.magnitude);
-            m_Rigidbody.MoveRotation(m_Rotation);
-        }
-    }
-
-    public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
-    {
-        if (!angleIsGlobal)
-        {
-            angleInDegrees += transform.eulerAngles.y;
-        }
-        return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
-    }
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, viewRadius);
-
-        Vector3 leftBoundary = DirFromAngle(-viewAngle / 2, false) * viewRadius;
-        Vector3 rightBoundary = DirFromAngle(viewAngle / 2, false) * viewRadius;
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(transform.position, transform.position + leftBoundary);
-        Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
-
-        Gizmos.color = new Color(0, 1, 1, 0.2f);
-        for (float i = 0; i <= 1f; i += 0.1f)
-        {
-            Vector3 interpLine = Vector3.Lerp(leftBoundary, rightBoundary, i);
-            Gizmos.DrawLine(transform.position, transform.position + interpLine);
-        }
-    }
 }
