@@ -5,56 +5,94 @@ using UnityEngine.SceneManagement;
 
 public class GameEnding : MonoBehaviour
 {
-    public float fadeDuration = 1f;
-    public float displayImageDuration = 1f;
-    public GameObject player;
-    public CanvasGroup exitBackgroundImageCanvasGroup; 
-    public CanvasGroup caughtBackgroundImageCanvasGroup;
+    public float fadeDuration = 1f; // Durata del fade-in
+    public float displayImageDuration = 1f; // Durata della visualizzazione del messaggio
+    public GameObject player; // Riferimento al giocatore
+    public CanvasGroup exitBackgroundImageCanvasGroup; // Messaggio di vittoria
+    public CanvasGroup caughtBackgroundImageCanvasGroup; // Messaggio di sconfitta (opzionale)
 
-    bool m_IsPlayerAtExit;
-    bool m_IsPlayerCaught;
-    float m_Timer;
-    
-    void OnTriggerEnter (Collider other)
+    private bool m_IsPlayerAtExit; // Flag per verificare se il giocatore è all'uscita
+    private bool m_IsPlayerCaught; // Flag per verificare se il giocatore è catturato
+    private float m_Timer; // Timer per gestire il fade
+    private bool m_HasGameEnded = false; // Flag per evitare ripetizioni
+
+    void Start()
     {
+        // Inizializza il timer a 0
+        m_Timer = 0f;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        // Controlla se il giocatore è entrato nel trigger
         if (other.gameObject == player)
         {
             m_IsPlayerAtExit = true;
+            DisablePlayerMovement(); // Blocca il movimento del giocatore
         }
     }
 
-    public void CaughtPlayer ()
+    public void CaughtPlayer()
     {
+        // Metodo per segnare il giocatore come catturato
         m_IsPlayerCaught = true;
+        DisablePlayerMovement(); // Blocca il movimento del giocatore
     }
 
-    void Update ()
+    void Update()
     {
+        // Gestisce l'uscita o la cattura del giocatore
         if (m_IsPlayerAtExit)
         {
-            EndLevel (exitBackgroundImageCanvasGroup, false);
+            EndLevel(exitBackgroundImageCanvasGroup, false); // Mostra messaggio di vittoria
         }
         else if (m_IsPlayerCaught)
         {
-            EndLevel (caughtBackgroundImageCanvasGroup, true);
+            EndLevel(caughtBackgroundImageCanvasGroup, true); // Mostra messaggio di sconfitta
         }
     }
 
-    void EndLevel (CanvasGroup imageCanvasGroup, bool doRestart)
+    void EndLevel(CanvasGroup imageCanvasGroup, bool doRestart)
     {
+        if (m_HasGameEnded) return; // Evita di eseguire più volte
+
+        // Incrementa il timer
         m_Timer += Time.deltaTime;
+
+        // Esegui il fade-in del Canvas
         imageCanvasGroup.alpha = m_Timer / fadeDuration;
 
+        // Controlla se il timer ha superato la durata totale
         if (m_Timer > fadeDuration + displayImageDuration)
         {
+            m_HasGameEnded = true;
+
             if (doRestart)
             {
-                SceneManager.LoadScene (0);
+                // Riavvia la scena
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
             else
             {
-                Application.Quit ();
+                // Esci dal gioco
+                Debug.Log("Hai vinto!");
+                Application.Quit();
             }
+        }
+    }
+
+    void DisablePlayerMovement()
+    {
+        // Disattiva tutti i componenti di movimento del giocatore
+        if (player.TryGetComponent(out MonoBehaviour movementScript))
+        {
+            movementScript.enabled = false; // Disabilita lo script di movimento
+        }
+
+        if (player.TryGetComponent(out Rigidbody rb))
+        {
+            rb.velocity = Vector3.zero; // Ferma il movimento
+            rb.isKinematic = true; // Rende il Rigidbody statico
         }
     }
 }
