@@ -8,8 +8,8 @@ public class GameEnding : MonoBehaviour
     public float fadeDuration = 1f; // Durata del fade-in
     public float displayImageDuration = 1f; // Durata della visualizzazione del messaggio
     public GameObject player; // Riferimento al giocatore
-    public CanvasGroup exitBackgroundImageCanvasGroup; // Messaggio di vittoria
-    public CanvasGroup caughtBackgroundImageCanvasGroup; // Messaggio di sconfitta (opzionale)
+    public CanvasGroup exitBackgroundImageCanvasGroup; // Immagine di vittoria
+    public CanvasGroup caughtBackgroundImageCanvasGroup; // Immagine di sconfitta
 
     private bool m_IsPlayerAtExit; // Flag per verificare se il giocatore è all'uscita
     private bool m_IsPlayerCaught; // Flag per verificare se il giocatore è catturato
@@ -23,7 +23,7 @@ public class GameEnding : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Controlla se il giocatore è entrato nel trigger
+        // Controlla se il giocatore è entrato nel trigger di uscita
         if (other.gameObject == player)
         {
             m_IsPlayerAtExit = true;
@@ -41,11 +41,11 @@ public class GameEnding : MonoBehaviour
         // Gestisce l'uscita o la cattura del giocatore
         if (m_IsPlayerAtExit)
         {
-            EndLevel(exitBackgroundImageCanvasGroup, false); // Mostra messaggio di vittoria
+            EndLevel(exitBackgroundImageCanvasGroup, false); // Mostra immagine di vittoria
         }
         else if (m_IsPlayerCaught)
         {
-            EndLevel(caughtBackgroundImageCanvasGroup, true); // Mostra messaggio di sconfitta
+            EndLevel(caughtBackgroundImageCanvasGroup, true); // Mostra immagine di sconfitta
         }
     }
 
@@ -55,7 +55,7 @@ public class GameEnding : MonoBehaviour
         m_Timer += Time.deltaTime;
 
         // Esegui il fade-in del Canvas
-        imageCanvasGroup.alpha = m_Timer / fadeDuration;
+        imageCanvasGroup.alpha = Mathf.Clamp(m_Timer / fadeDuration, 0, 1);
 
         // Controlla se il timer ha superato la durata totale
         if (m_Timer > fadeDuration + displayImageDuration)

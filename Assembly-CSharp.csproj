@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="Assets\DenysAlmaral\CityPeopleLite\Demo_Scenes\Scripts\CityPeople.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\WayPointPatrol.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\BidellaAI.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\LightFlicker.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\PlayerHealth.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\IA_NPC.cs" />

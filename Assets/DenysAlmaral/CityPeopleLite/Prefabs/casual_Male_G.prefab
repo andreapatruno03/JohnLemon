@@ -138,9 +138,10 @@ GameObject:
   m_Component:
   - component: {fileID: 2100208028559941110}
   - component: {fileID: 5459872135671498636}
-  - component: {fileID: 1058556038379161208}
   - component: {fileID: 7100395061118832419}
   - component: {fileID: 2186510616688199503}
+  - component: {fileID: 828010026776026191}
+  - component: {fileID: 3376064943356706742}
   m_Layer: 7
   m_Name: casual_Male_G
   m_TagString: NPC
@@ -186,20 +187,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &1058556038379161208
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1616406060653692748}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54f141628068b9b4493f69f797f003b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rotationSpeed: 10
-  movementSpeed: 3
 --- !u!54 &7100395061118832419
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -246,6 +233,56 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
+--- !u!114 &828010026776026191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616406060653692748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a719ce8789f5bb64a93a808c98d53646, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  viewRadius: 10
+  viewAngle: 120
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 8
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 64
+  moveSpeed: 1.5
+  turnSpeed: 5
+  player: {fileID: 0}
+--- !u!114 &3376064943356706742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616406060653692748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 420a65d925630694ea2a7017113de832, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentState: 0
+  patrolPoints: []
+  normalSpeed: 0.8
+  rotationSpeed: 3
+  chaseSpeedMultiplier: 1
+  player: {fileID: 0}
+  detectionRange: 5
+  alertRange: 7
+  fieldOfViewAngle: 90
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!1 &1719302345640664642
 GameObject:
   m_ObjectHideFlags: 0
