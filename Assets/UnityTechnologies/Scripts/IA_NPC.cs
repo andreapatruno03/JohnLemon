@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class AdvancedAIFSM : MonoBehaviour
+public class IA_NPC : MonoBehaviour
 {
     public enum AIState { Patrol, Chase, Alert, Investigate }
 
@@ -17,14 +17,15 @@ public class AdvancedAIFSM : MonoBehaviour
     public float chaseSpeedMultiplier = 1.2f;
 
     [Header("Detection")]
-    public Transform player;
-    public float detectionRange = 5f;
-    public float alertRange = 7f;
-    [Range(0, 360)] public float fieldOfViewAngle = 90f;
+    public float viewRadius = 15f; // Raggio di visione
+    [Range(0, 360)] public float fieldOfViewAngle = 120f; // Angolo di visione
+    public LayerMask targetMask; // Layer del giocatore o degli oggetti da rilevare
+    public LayerMask obstacleMask; // Layer degli ostacoli
+    public Transform player; // Riferimento al giocatore
+    public bool CanSeeTarget { get; private set; } // Controlla se vede il target
 
     [Header("Layers")]
     public LayerMask obstacleLayer;
-    public LayerMask playerLayer;
 
     // Components
     private Rigidbody rb;
@@ -89,7 +90,7 @@ public class AdvancedAIFSM : MonoBehaviour
     {
         if (rb == null || animator == null || patrolPoints.Length == 0) return;
 
-        DetectPlayerInRange();
+        FindVisibleTargets();
 
         switch (currentState)
         {
@@ -119,6 +120,11 @@ public class AdvancedAIFSM : MonoBehaviour
         {
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
         }
+
+        if (CanSeeTarget)
+        {
+            TransitionToState(AIState.Chase);
+        }
     }
 
     void HandleChaseState()
@@ -129,7 +135,7 @@ public class AdvancedAIFSM : MonoBehaviour
             return;
         }
 
-        if (!IsPlayerVisible())
+        if (!CanSeeTarget)
         {
             lastPlayerSpottedTime = Time.time;
             lastKnownPlayerPosition = player.position;
@@ -138,7 +144,7 @@ public class AdvancedAIFSM : MonoBehaviour
         }
 
         float adjustedChaseSpeed = normalSpeed * chaseSpeedMultiplier;
-        MoveTowardsPosition(player.position, adjustedChaseSpeed);
+        MoveTowardsPlayer(adjustedChaseSpeed);
     }
 
     void HandleAlertState()
@@ -162,65 +168,60 @@ public class AdvancedAIFSM : MonoBehaviour
     }
 
     void MoveTowardsPosition(Vector3 position, float moveSpeed)
-{
-    movementDirection = (position - transform.position).normalized;
-
-    if (movementDirection.magnitude < 0.1f)
     {
-        movementDirection = Vector3.zero;
-        animator.SetBool("isWalking", false); // Ferma l'animazione di camminata
-        return;
-    }
+        movementDirection = (position - transform.position).normalized;
 
-    RotateTowards(movementDirection);
-
-    // Attiva l'animazione di camminata
-    animator.SetBool("isWalking", true);
-
-    // Muovi il personaggio
-    rb.MovePosition(transform.position + movementDirection * moveSpeed * Time.fixedDeltaTime);
-}
-
-
-    bool CheckForObstacle()
-    {
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, 1f, obstacleLayer))
+        if (movementDirection.magnitude < 0.1f)
         {
-            Debug.DrawRay(transform.position, transform.forward * 1f, Color.red);
-            return true;
+            movementDirection = Vector3.zero;
+            animator.SetBool("isWalking", false); // Ferma l'animazione di camminata
+            return;
         }
 
-        Debug.DrawRay(transform.position, transform.forward * 1f, Color.green);
-        return false;
+        RotateTowards(movementDirection);
+
+        // Attiva l'animazione di camminata
+        animator.SetBool("isWalking", true);
+
+        // Muovi il personaggio
+        rb.MovePosition(transform.position + movementDirection * moveSpeed * Time.fixedDeltaTime);
     }
 
-    void DetectPlayerInRange()
+    private void MoveTowardsPlayer(float moveSpeed)
     {
-        if (player != null && IsPlayerVisible())
-        {
-            TransitionToState(AIState.Chase);
-        }
+        if (player == null) return;
+
+        Vector3 direction = (player.position - transform.position).normalized;
+        movementDirection = direction;
+
+        RotateTowards(direction);
+
+        animator.SetBool("isWalking", true);
+        rb.MovePosition(transform.position + movementDirection * moveSpeed * Time.fixedDeltaTime);
     }
 
-    bool IsPlayerVisible()
+    private void FindVisibleTargets()
     {
-        if (player == null) return false;
+        Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, viewRadius, targetMask);
+        CanSeeTarget = false;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        if (distanceToPlayer > detectionRange) return false;
-
-        Vector3 directionToTarget = (player.position - transform.position).normalized;
-        float angle = Vector3.Angle(transform.forward, directionToTarget);
-
-        if (angle < fieldOfViewAngle * 0.5f)
+        foreach (Collider target in targetsInViewRadius)
         {
-            if (!Physics.Raycast(transform.position, directionToTarget, out RaycastHit hit, detectionRange, obstacleLayer))
+            Transform targetTransform = target.transform;
+            Vector3 directionToTarget = (new Vector3(targetTransform.position.x, transform.position.y, targetTransform.position.z) - transform.position).normalized;
+
+            if (Vector3.Angle(transform.forward, directionToTarget) < fieldOfViewAngle / 2)
             {
-                return true;
+                float distanceToTarget = Vector3.Distance(transform.position, targetTransform.position);
+
+                if (!Physics.Raycast(transform.position, directionToTarget, distanceToTarget, obstacleMask))
+                {
+                    CanSeeTarget = true;
+                    player = targetTransform;
+                    break;
+                }
             }
         }
-
-        return false;
     }
 
     void RotateTowards(Vector3 targetDirection)
@@ -238,5 +239,5 @@ public class AdvancedAIFSM : MonoBehaviour
 
         previousState = currentState;
         currentState = newState;
-    }
+    }
 }

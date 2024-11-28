@@ -245,7 +245,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a719ce8789f5bb64a93a808c98d53646, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  viewRadius: 10
+  viewRadius: 15
   viewAngle: 120
   targetMask:
     serializedVersion: 2
@@ -253,7 +253,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
-  moveSpeed: 1.5
+  moveSpeed: 1
   turnSpeed: 5
   player: {fileID: 0}
 --- !u!114 &3376064943356706742
@@ -271,18 +271,20 @@ MonoBehaviour:
   currentState: 0
   patrolPoints: []
   normalSpeed: 0.8
-  rotationSpeed: 3
+  rotationSpeed: 5
   chaseSpeedMultiplier: 1
+  viewRadius: 8
+  fieldOfViewAngle: 120
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 8
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 64
   player: {fileID: 0}
-  detectionRange: 5
-  alertRange: 7
-  fieldOfViewAngle: 90
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
-  playerLayer:
-    serializedVersion: 2
-    m_Bits: 8
 --- !u!1 &1719302345640664642
 GameObject:
   m_ObjectHideFlags: 0

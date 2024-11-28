@@ -46,17 +46,18 @@ public class NPC_Alert : MonoBehaviour
     }
 
     void AlertPreside()
+{
+    if (presideAI != null)
     {
-        if (presideAI != null)
-        {
-            // Avvisa il Preside della posizione del giocatore
-            presideAI.AlertPreside(playerPosition);
-            Debug.Log("NPC ha avvisato il Preside!");
-        }
-        else
-        {
-            Debug.LogWarning("Il riferimento al Preside non è stato impostato!");
-        }
+        // Avvisa il Preside della posizione del giocatore
+        presideAI.AlertPreside(playerPosition);
+        Debug.Log($"NPC ha avvisato il Preside della posizione del giocatore: {playerPosition}");
     }
+    else
+    {
+        Debug.LogWarning("Il riferimento al Preside non è stato impostato!");
+    }
+}
+
 
 }
