@@ -3,21 +3,22 @@ using UnityEngine;
 public class NPC_Alert : MonoBehaviour
 {
     [Header("Player Detection")]
-    public Transform player;
-    public float detectionRange = 5f;
-    [Range(0, 360)] public float fieldOfViewAngle = 90f;
+    public Transform player; // Riferimento al giocatore
+    public float detectionRange = 5f; // Raggio di rilevamento
+    [Range(0, 360)] public float fieldOfViewAngle = 90f; // Angolo di visione
 
     [Header("Preside Reference")]
-    public PresideAI presideAI;
+    public PresideAI presideAI; // Riferimento al PresideAI
 
     [Header("Layers")]
-    public LayerMask obstacleLayer;
+    public LayerMask obstacleLayer; // Layer degli ostacoli
 
-    public bool playerDetected { get; private set; }
-    public Vector3 playerPosition { get; private set; }
+    public bool playerDetected { get; private set; } // Stato: giocatore rilevato
+    public Vector3 playerPosition { get; private set; } // Posizione del giocatore rilevata
 
     void Update()
     {
+        // Rileva il giocatore e avvisa il Preside se rilevato
         DetectPlayer();
         if (playerDetected)
         {
@@ -29,35 +30,44 @@ public class NPC_Alert : MonoBehaviour
     {
         playerDetected = false;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        if (distanceToPlayer > detectionRange) return;
-
-        Vector3 directionToPlayer = (player.position - transform.position).normalized;
-        float angle = Vector3.Angle(transform.forward, directionToPlayer);
-        if (angle > fieldOfViewAngle * 0.5f) return;
-
-        if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, detectionRange, obstacleLayer))
+        if (player == null)
         {
-            if (hit.transform != player) return;
+            Debug.LogWarning("Riferimento al giocatore non assegnato!");
+            return;
         }
 
+        // Calcola la distanza tra NPC e giocatore
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        if (distanceToPlayer > detectionRange) return; // Fuori dal raggio di rilevamento
+
+        // Calcola la direzione verso il giocatore
+        Vector3 directionToPlayer = (player.position - transform.position).normalized;
+        float angle = Vector3.Angle(transform.forward, directionToPlayer);
+
+        if (angle > fieldOfViewAngle * 0.5f) return; // Fuori dall'angolo di visione
+
+        // Lancia un Raycast per verificare se ci sono ostacoli
+        if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, detectionRange))
+        {
+            if (hit.transform != player) return; // Colpito qualcosa che non è il giocatore
+        }
+
+        // Giocatore rilevato
         playerDetected = true;
         playerPosition = player.position;
     }
 
-    void AlertPreside()
-{
-    if (presideAI != null)
+    public void AlertPreside()
     {
-        // Avvisa il Preside della posizione del giocatore
-        presideAI.AlertPreside(playerPosition);
-        Debug.Log($"NPC ha avvisato il Preside della posizione del giocatore: {playerPosition}");
+        if (presideAI != null)
+        {
+            // Avvisa il Preside della posizione del giocatore
+            presideAI.AlertPreside(playerPosition);
+            Debug.Log($"NPC ha avvisato il Preside della posizione del giocatore: {playerPosition}");
+        }
+        else
+        {
+            Debug.LogWarning("Il riferimento al Preside non è stato impostato!");
+        }
     }
-    else
-    {
-        Debug.LogWarning("Il riferimento al Preside non è stato impostato!");
-    }
-}
-
-
 }
