@@ -36,23 +36,19 @@ public class NPC_Alert : MonoBehaviour
             return;
         }
 
-        // Calcola la distanza tra NPC e giocatore
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        if (distanceToPlayer > detectionRange) return; // Fuori dal raggio di rilevamento
+        if (distanceToPlayer > detectionRange) return;
 
-        // Calcola la direzione verso il giocatore
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         float angle = Vector3.Angle(transform.forward, directionToPlayer);
 
-        if (angle > fieldOfViewAngle * 0.5f) return; // Fuori dall'angolo di visione
+        if (angle > fieldOfViewAngle * 0.5f) return;
 
-        // Lancia un Raycast per verificare se ci sono ostacoli
         if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, detectionRange))
         {
-            if (hit.transform != player) return; // Colpito qualcosa che non è il giocatore
+            if (hit.transform != player) return;
         }
 
-        // Giocatore rilevato
         playerDetected = true;
         playerPosition = player.position;
     }
@@ -61,7 +57,6 @@ public class NPC_Alert : MonoBehaviour
     {
         if (presideAI != null)
         {
-            // Avvisa il Preside della posizione del giocatore
             presideAI.AlertPreside(playerPosition);
             Debug.Log($"NPC ha avvisato il Preside della posizione del giocatore: {playerPosition}");
         }

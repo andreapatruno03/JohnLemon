@@ -253,8 +253,6 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
-  moveSpeed: 1
-  turnSpeed: 5
   player: {fileID: 0}
 --- !u!114 &3376064943356706742
 MonoBehaviour:
@@ -268,23 +266,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 420a65d925630694ea2a7017113de832, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentState: 0
   patrolPoints: []
-  normalSpeed: 0.8
+  normalSpeed: 2
   rotationSpeed: 5
-  chaseSpeedMultiplier: 1
-  viewRadius: 8
-  fieldOfViewAngle: 120
-  targetMask:
-    serializedVersion: 2
-    m_Bits: 8
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 64
-  player: {fileID: 0}
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 64
+  chaseSpeedMultiplier: 2.2
+  currentState: 0
 --- !u!1 &1719302345640664642
 GameObject:
   m_ObjectHideFlags: 0

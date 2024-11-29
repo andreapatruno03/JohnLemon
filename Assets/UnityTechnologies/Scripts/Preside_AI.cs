@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PresideAI : MonoBehaviour
+public class PresideAI : MonoBehaviour, IMovementController
 {
     public enum AIState { Patrol, Chase, Alert, Investigate }
 
@@ -20,10 +20,7 @@ public class PresideAI : MonoBehaviour
     public float chaseSpeedMultiplier = 1.5f;
 
     [Header("Detection")]
-    public Transform player;
     public float detectionRange = 5f;
-    public float alertRange = 10f;
-    [Range(0, 360)] public float fieldOfViewAngle = 90f;
 
     [Header("Communication with Other NPCs")]
     public LayerMask npcLayer;
@@ -41,12 +38,17 @@ public class PresideAI : MonoBehaviour
     private Animator animator;
 
     // State Tracking
-    private int currentPatrolIndex = 0;
-    private float lastPlayerSpottedTime;
+    private Transform player; // Riferimento al giocatore
     private Vector3 lastKnownPlayerPosition;
     private Vector3 movementDirection;
+    private bool canSeePlayer; // Indica se il giocatore è visibile
+    private int currentPatrolIndex = 0;
 
-    private bool isChasing = false; // Stato di inseguimento
+    private bool isChasing = false;
+
+    // Alert Timer
+    private float alertTimer = 0f;
+    private float alertDuration = 3f; // Durata dello stato Alert
 
     void Start()
     {
@@ -64,44 +66,17 @@ public class PresideAI : MonoBehaviour
         rb = genSuit.GetComponent<Rigidbody>();
         animator = genSuit.GetComponent<Animator>();
 
-        if (rb == null)
-        {
-            Debug.LogError($"Rigidbody non trovato nel GameObject '{genSuit.name}'! Verifica che sia presente.");
-        }
+        if (rb == null) Debug.LogError($"Rigidbody non trovato nel GameObject '{genSuit.name}'!");
+        if (animator == null) Debug.LogError($"Animator non trovato nel GameObject '{genSuit.name}'!");
 
-        if (animator == null)
+        if (patrolPoints == null || patrolPoints.Length == 0)
         {
-            Debug.LogError($"Animator non trovato nel GameObject '{genSuit.name}'! Verifica che sia presente.");
-        }
-
-        if (player == null)
-        {
-            Debug.LogWarning("Il riferimento al giocatore non è stato impostato!");
-        }
-
-        if (patrolPoints.Length > 0)
-        {
-            currentPatrolIndex = 0;
-        }
-    }
-
-    void FixedUpdate()
-    {
-        if (rb == null || animator == null) return;
-
-        if (movementDirection != Vector3.zero)
-        {
-            rb.MovePosition(rb.position + movementDirection * normalSpeed * Time.fixedDeltaTime);
+            Debug.LogWarning("Nessun waypoint di pattuglia assegnato!");
         }
     }
 
     void Update()
     {
-        if (rb == null || animator == null || patrolPoints.Length == 0) return;
-
-        DetectPlayerInRange();
-        ListenForNpcAlert();
-
         switch (currentState)
         {
             case AIState.Patrol:
@@ -119,13 +94,41 @@ public class PresideAI : MonoBehaviour
         }
     }
 
-    void HandlePatrolState()
+    public void AlertPreside(Vector3 playerPosition)
+    {
+        lastKnownPlayerPosition = playerPosition;
+
+        // Cambia lo stato del Preside in Chase se non è già in inseguimento
+        if (currentState != AIState.Chase)
+        {
+            TransitionToState(AIState.Chase);
+            Debug.Log($"Preside avvisato della posizione del giocatore: {playerPosition}");
+        }
+    }
+
+    public void UpdateVisionState(bool canSeeTarget, Transform target)
+    {
+        canSeePlayer = canSeeTarget;
+
+        if (canSeeTarget)
+        {
+            player = target;
+            lastKnownPlayerPosition = target.position;
+            TransitionToState(AIState.Chase);
+        }
+        else if (currentState == AIState.Chase)
+        {
+            TransitionToState(AIState.Alert);
+        }
+    }
+
+    private void HandlePatrolState()
     {
         isChasing = false;
 
-        if (patrolPoints.Length == 0)
+        if (patrolPoints == null || patrolPoints.Length == 0)
         {
-            Debug.LogWarning("Nessun waypoint assegnato!");
+            animator.SetBool("isWalking", false);
             return;
         }
 
@@ -140,7 +143,7 @@ public class PresideAI : MonoBehaviour
         }
     }
 
-    void HandleChaseState()
+    private void HandleChaseState()
     {
         if (player == null)
         {
@@ -148,50 +151,48 @@ public class PresideAI : MonoBehaviour
             return;
         }
 
-        if (IsPlayerVisible())
-        {
-            lastKnownPlayerPosition = player.position;
-        }
-
         animator.SetBool("isWalking", true);
         float adjustedChaseSpeed = normalSpeed * chaseSpeedMultiplier;
+
         MoveTowardsPosition(lastKnownPlayerPosition, adjustedChaseSpeed);
 
-        if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f && !IsPlayerVisible())
+        if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f && !canSeePlayer)
         {
             TransitionToState(AIState.Alert);
         }
     }
 
-    void HandleAlertState()
+    private void HandleAlertState()
     {
         isChasing = false;
 
         animator.SetBool("isWalking", false);
 
-        if (Time.time - lastPlayerSpottedTime > Random.Range(2f, 5f))
+        // Incrementa il timer
+        alertTimer += Time.deltaTime;
+
+        // Dopo un certo periodo, torna in stato di Patrol
+        if (alertTimer >= alertDuration)
         {
-            FindClosestPatrolPoint();
+            alertTimer = 0f; // Resetta il timer
             TransitionToState(AIState.Patrol);
         }
     }
 
-    void HandleInvestigateState()
+    private void HandleInvestigateState()
     {
         isChasing = false;
-
         animator.SetBool("isWalking", true);
 
         MoveTowardsPosition(lastKnownPlayerPosition, normalSpeed);
 
         if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f)
         {
-            FindClosestPatrolPoint();
             TransitionToState(AIState.Patrol);
         }
     }
 
-    void MoveTowardsPosition(Vector3 position, float moveSpeed)
+    private void MoveTowardsPosition(Vector3 position, float moveSpeed)
     {
         movementDirection = (position - transform.position).normalized;
 
@@ -206,53 +207,12 @@ public class PresideAI : MonoBehaviour
         rb.MovePosition(transform.position + movementDirection * moveSpeed * Time.deltaTime);
     }
 
-    void RotateTowards(Vector3 targetDirection)
+    private void RotateTowards(Vector3 targetDirection)
     {
         if (targetDirection != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-        }
-    }
-
-    void DetectPlayerInRange()
-    {
-        if (player != null && IsPlayerVisible())
-        {
-            TransitionToState(AIState.Chase);
-        }
-    }
-
-    bool IsPlayerVisible()
-    {
-        if (player == null) return false;
-
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        if (distanceToPlayer > detectionRange) return false;
-
-        Vector3 directionToTarget = (player.position - transform.position).normalized;
-
-        if (Physics.Raycast(transform.position, directionToTarget, out RaycastHit hit, detectionRange))
-        {
-            return hit.transform == player;
-        }
-
-        return false;
-    }
-
-    void ListenForNpcAlert()
-    {
-        Collider[] alertedNpcs = Physics.OverlapSphere(transform.position, npcAlertRadius, npcLayer);
-
-        foreach (var npc in alertedNpcs)
-        {
-            NPC_Alert alert = npc.GetComponent<NPC_Alert>();
-            if (alert != null && alert.playerDetected)
-            {
-                lastKnownPlayerPosition = alert.playerPosition;
-                TransitionToState(AIState.Chase);
-                break;
-            }
         }
     }
 
@@ -264,40 +224,11 @@ public class PresideAI : MonoBehaviour
         currentState = newState;
 
         isChasing = (newState == AIState.Chase);
-    }
 
-    void FindClosestPatrolPoint()
-    {
-        float closestDistance = float.MaxValue;
-        int closestIndex = currentPatrolIndex;
-
-        for (int i = 0; i < patrolPoints.Length; i++)
+        // Resetta il timer quando si cambia stato
+        if (newState != AIState.Alert)
         {
-            float distance = Vector3.Distance(transform.position, patrolPoints[i].position);
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                closestIndex = i;
-            }
+            alertTimer = 0f;
         }
-
-        currentPatrolIndex = closestIndex;
     }
-
-    public void AlertPreside(Vector3 playerPosition)
-{
-    lastKnownPlayerPosition = playerPosition;
-
-    // Cambia lo stato del Preside in Chase se non è già in inseguimento
-    if (currentState != AIState.Chase)
-    {
-        TransitionToState(AIState.Chase);
-        Debug.Log($"Preside avvisato della posizione del giocatore: {playerPosition}");
-    }
-    else
-    {
-        Debug.Log("Preside è già in modalità inseguimento.");
-    }
-}
-
 }

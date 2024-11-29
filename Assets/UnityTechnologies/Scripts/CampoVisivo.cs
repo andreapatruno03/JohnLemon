@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class FieldOfView : MonoBehaviour
@@ -13,26 +11,42 @@ public class FieldOfView : MonoBehaviour
     public LayerMask targetMask; // Layer del giocatore o degli oggetti da rilevare
     public LayerMask obstacleMask; // Layer degli ostacoli
 
-    [Header("Movement")]
-    public float moveSpeed = 3f; // Velocità di movimento verso il giocatore
-    public float turnSpeed = 5f; // Velocità di rotazione verso il giocatore
-
     [Header("State")]
     public Transform player; // Riferimento al giocatore
     public bool CanSeeTarget { get; private set; } // Controlla se vede il target
 
-    private Vector3 m_Movement;
-    private Quaternion m_Rotation = Quaternion.identity;
+    private IMovementController movementController; // Generico controller del movimento
+
+    private void Awake()
+{
+    // Cerca un componente che implementi IMovementController
+    movementController = GetComponent<IMovementController>();
+
+    if (movementController == null)
+    {
+        Debug.LogError($"Il GameObject '{gameObject.name}' non ha un componente che implementa IMovementController. Verifica la configurazione e l'implementazione dell'interfaccia.");
+    }
+    else
+    {
+        Debug.Log($"Trovato componente che implementa IMovementController sul GameObject '{gameObject.name}'.");
+    }
+}
+
+
+
 
     void Update()
     {
-        // Trova i target visibili
+        if (movementController == null)
+        {
+            Debug.LogError($"movementController è null per il GameObject '{gameObject.name}'. Verifica la configurazione.");
+            return;
+        }
+
         FindVisibleTargets();
 
-        if (CanSeeTarget)
-        {
-            MoveTowardsPlayer();
-        }
+        // Aggiorna lo stato al controller di movimento
+        movementController.UpdateVisionState(CanSeeTarget, player);
     }
 
     private void FindVisibleTargets()
@@ -53,35 +67,13 @@ public class FieldOfView : MonoBehaviour
                 {
                     CanSeeTarget = true;
                     player = targetTransform;
-                    Debug.Log("Giocatore rilevato!");
-                    break;
+                    Debug.Log($"{gameObject.name} ha rilevato il giocatore: {player.name}");
+                    return;
                 }
             }
         }
 
-        if (!CanSeeTarget)
-        {
-            Debug.Log("Giocatore non rilevato.");
-        }
-    }
-
-    private void MoveTowardsPlayer()
-    {
-        if (player == null)
-        {
-            Debug.LogWarning("Player non assegnato!");
-            return;
-        }
-
-        Vector3 direction = (player.position - transform.position).normalized;
-        m_Movement = direction * moveSpeed * Time.deltaTime;
-
-        // Rotazione verso il giocatore
-        Vector3 desiredForward = Vector3.RotateTowards(transform.forward, direction, turnSpeed * Time.deltaTime, 0f);
-        m_Rotation = Quaternion.LookRotation(desiredForward);
-
-        // Movimento tramite Transform
-        transform.position += m_Movement;
-        transform.rotation = m_Rotation;
+        CanSeeTarget = false;
+        player = null;
     }
 }
