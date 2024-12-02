@@ -89,8 +89,6 @@ public class IA_NPC : MonoBehaviour, IMovementController
             return;
         }
 
-        animator.SetBool("isWalking", true);
-
         Transform target = patrolPoints[currentPatrolIndex];
         MoveTowardsPosition(target.position, normalSpeed);
 
@@ -108,7 +106,6 @@ public class IA_NPC : MonoBehaviour, IMovementController
             return;
         }
 
-        animator.SetBool("isWalking", true);
         MoveTowardsPosition(lastKnownPlayerPosition, normalSpeed * chaseSpeedMultiplier);
 
         if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f && !canSeePlayer)
@@ -119,8 +116,6 @@ public class IA_NPC : MonoBehaviour, IMovementController
 
     private void HandleAlertState()
     {
-        animator.SetBool("isWalking", false);
-
         alertTimer += Time.deltaTime;
 
         if (alertTimer >= alertDuration)
@@ -132,8 +127,6 @@ public class IA_NPC : MonoBehaviour, IMovementController
 
     private void HandleInvestigateState()
     {
-        animator.SetBool("isWalking", true);
-
         MoveTowardsPosition(lastKnownPlayerPosition, normalSpeed);
 
         if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f)
@@ -170,9 +163,34 @@ public class IA_NPC : MonoBehaviour, IMovementController
     {
         if (currentState == newState) return;
 
+        // Aggiorna lo stato corrente
         currentState = newState;
 
+        // Resetta i parametri dell'Animator
+        switch (newState)
+        {
+            case AIState.Patrol:
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isChasing", false);
+                break;
+            case AIState.Chase:
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isChasing", true);
+                break;
+            case AIState.Alert:
+                animator.SetBool("isWalking", false);
+                animator.SetBool("isChasing", false);
+                break;
+            case AIState.Investigate:
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isChasing", false);
+                break;
+        }
+
+        // Resetta il timer dello stato di Alert
         if (newState != AIState.Alert)
-            alertTimer = 0f; // Resetta il timer per Alert
+        {
+            alertTimer = 0f;
+        }
     }
 }

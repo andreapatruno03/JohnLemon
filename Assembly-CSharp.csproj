@@ -68,6 +68,7 @@
     <Compile Include="Assets\DenysAlmaral\CityPeopleLite\Demo_Scenes\Scripts\CityPeople.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\WayPointPatrol.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\BidellaAI.cs" />
+    <Compile Include="Assets\FastMesh\Scripts\SceneViewText.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\IMovementController.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\LightFlicker.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\PlayerHealth.cs" />
@@ -76,9 +77,11 @@
     <Compile Include="Assets\UnityTechnologies\Scripts\IA_NPC.cs" />
     <Compile Include="Assets\UnityTechnologies\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\Preside_AI.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\ArrowFade.cs" />
     <Compile Include="Assets\GameEnding.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\SimpleAI.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\Observer.cs" />
+    <Compile Include="Assets\UnityTechnologies\Scripts\RoomScript.cs" />
     <Compile Include="Assets\CameraFollow.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\PlayerMovement.cs" />
     <Compile Include="Assets\UnityTechnologies\Scripts\NPC_Alert.cs" />
@@ -99,6 +102,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
+    <None Include="Assets\FastMesh\README.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
