@@ -18,22 +18,22 @@ public class FieldOfView : MonoBehaviour
     private IMovementController movementController; // Generico controller del movimento
 
     private void Awake()
-{
-    // Cerca un componente che implementi IMovementController
-    movementController = GetComponent<IMovementController>();
-
-    if (movementController == null)
     {
-        Debug.LogError($"Il GameObject '{gameObject.name}' non ha un componente che implementa IMovementController. Verifica la configurazione e l'implementazione dell'interfaccia.");
+        // Disattiva la sincronizzazione automatica dei trasformatori per evitare effetti di debug impliciti
+        Physics.autoSyncTransforms = false;
+
+        // Cerca un componente che implementi IMovementController
+        movementController = GetComponent<IMovementController>();
+
+        if (movementController == null)
+        {
+            Debug.LogError($"Il GameObject '{gameObject.name}' non ha un componente che implementi IMovementController. Verifica la configurazione e l'implementazione dell'interfaccia.");
+        }
+        else
+        {
+            Debug.Log($"Trovato componente che implementa IMovementController sul GameObject '{gameObject.name}'.");
+        }
     }
-    else
-    {
-        Debug.Log($"Trovato componente che implementa IMovementController sul GameObject '{gameObject.name}'.");
-    }
-}
-
-
-
 
     void Update()
     {
@@ -51,6 +51,7 @@ public class FieldOfView : MonoBehaviour
 
     private void FindVisibleTargets()
     {
+        // Usa OverlapSphere per calcolare i target nel raggio senza mostrare cerchi
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, viewRadius, targetMask);
         CanSeeTarget = false;
 
@@ -75,5 +76,33 @@ public class FieldOfView : MonoBehaviour
 
         CanSeeTarget = false;
         player = null;
+    }
+
+    private void OnDrawGizmos()
+    {
+        // Disegna il campo visivo (senza cerchi gialli)
+        Vector3 viewAngleA = DirFromAngle(-viewAngle / 2, false);
+        Vector3 viewAngleB = DirFromAngle(viewAngle / 2, false);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(transform.position, transform.position + viewAngleA * viewRadius);
+        Gizmos.DrawLine(transform.position, transform.position + viewAngleB * viewRadius);
+
+        // Disegna una linea verso il giocatore, se visibile
+        if (CanSeeTarget && player != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(transform.position, player.position);
+        }
+    }
+
+    // Funzione per calcolare una direzione da un angolo
+    private Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
+    {
+        if (!angleIsGlobal)
+        {
+            angleInDegrees += transform.eulerAngles.y;
+        }
+        return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
     }
 }
