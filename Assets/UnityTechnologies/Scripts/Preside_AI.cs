@@ -1,54 +1,43 @@
 using UnityEngine;
 
-public class PresideAI : MonoBehaviour, IMovementController
+public class PresideAI : MonoBehaviour
 {
     public enum AIState { Patrol, Chase, Alert, Investigate }
 
-    [Header("Pathfinding")]
-    public Pathfinding pathfinding; // Riferimento al sistema di Pathfinding
+    [Header("Waypoints")]
+    public Transform[] waypoints; // Lista dei waypoint per il teletrasporto
+
+    [Header("Patrol Points")]
+    public Transform[] patrolPoints; // Lista dei punti di pattuglia
 
     [Header("State Management")]
     public AIState currentState = AIState.Patrol;
-    private AIState previousState;
 
     [Header("Movement")]
-    public Transform[] patrolPoints;
-    public float normalSpeed = 2f;
-    public float rotationSpeed = 5f;
+    public float normalSpeed = 2f; // Velocità di pattugliamento
+    public float rotationSpeed = 5f; // Velocità di rotazione
 
-    [Header("Chase Settings")]
-    public float chaseSpeedMultiplier = 1.5f;
-
-    [Header("Detection")]
-    public float detectionRange = 5f;
+    [Header("Field of View Reference")]
+    public FieldOfView fieldOfView; // Riferimento al campo visivo
 
     [Header("Communication with Other NPCs")]
-    public LayerMask npcLayer;
-    public float npcAlertRadius = 10f;
+    public LayerMask npcLayer; // Layer per rilevare altri NPC
+    public float npcAlertRadius = 10f; // Raggio di comunicazione
 
-    [Header("Prefab")]
-    public Transform genSuit; // Riferimento diretto al GameObject genSuit con Rigidbody e Animator
-
-    [Header("Layers")]
-    public LayerMask obstacleLayer;
-    public LayerMask playerLayer;
+    [Header("References")]
+    public Transform genSuit; // Riferimento all'oggetto principale del Preside
 
     // Components
     private Rigidbody rb;
     private Animator animator;
 
-    // State Tracking
-    private Transform player; // Riferimento al giocatore
+    // Indice del patrol point corrente
+    private int currentPatrolIndex = 0;
     private Vector3 lastKnownPlayerPosition;
     private Vector3 movementDirection;
-    private bool canSeePlayer; // Indica se il giocatore è visibile
-    private int currentPatrolIndex = 0;
 
-    private bool isChasing = false;
-
-    // Alert Timer
-    private float alertTimer = 0f;
-    private float alertDuration = 3f; // Durata dello stato Alert
+    // Distanza per il teletrasporto
+    public float teleportDistanceThreshold = 20f; // Cambia il valore per regolare la distanza
 
     void Start()
     {
@@ -57,26 +46,52 @@ public class PresideAI : MonoBehaviour, IMovementController
 
     void InitializeComponents()
     {
+        rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
+
+        if (rb == null)
+        {
+            Debug.LogError("Rigidbody non trovato! Aggiungi un Rigidbody al Preside.");
+        }
+        if (animator == null)
+        {
+            Debug.LogError("Animator non trovato! Aggiungi un Animator al Preside.");
+        }
         if (genSuit == null)
         {
-            Debug.LogError("Il prefab non è stato assegnato nel componente PresideAI! Assicurati di assegnarlo nell'Inspector.");
-            return;
+            Debug.LogError("genSuit non assegnato! Assicurati di assegnarlo nell'Inspector.");
         }
-
-        rb = genSuit.GetComponent<Rigidbody>();
-        animator = genSuit.GetComponent<Animator>();
-
-        if (rb == null) Debug.LogError($"Rigidbody non trovato nel GameObject '{genSuit.name}'!");
-        if (animator == null) Debug.LogError($"Animator non trovato nel GameObject '{genSuit.name}'!");
-
-        if (patrolPoints == null || patrolPoints.Length == 0)
+        if (fieldOfView == null)
         {
-            Debug.LogWarning("Nessun waypoint di pattuglia assegnato!");
+            Debug.LogError("FieldOfView non assegnato! Assicurati di assegnarlo nell'Inspector.");
+        }
+        if (patrolPoints.Length == 0)
+        {
+            Debug.LogWarning("Nessun Patrol Point assegnato! Aggiungili nell'Inspector.");
         }
     }
 
     void Update()
     {
+        if (rb == null || animator == null || patrolPoints.Length == 0) return;
+
+        // Teletrasporto quando il giocatore è troppo lontano
+        if (fieldOfView.detectedTarget != null && Vector3.Distance(transform.position, fieldOfView.detectedTarget.position) > teleportDistanceThreshold)
+        {
+            TeleportToNearestWaypoint();
+        }
+
+        // Controlla il campo visivo per cambiare stato
+        if (fieldOfView != null && fieldOfView.CanSeeTarget)
+        {
+            if (fieldOfView.detectedTarget != null)
+            {
+                lastKnownPlayerPosition = fieldOfView.detectedTarget.position;
+                TransitionToState(AIState.Chase);
+            }
+        }
+
+        // Gestisce il comportamento in base allo stato corrente
         switch (currentState)
         {
             case AIState.Patrol:
@@ -94,96 +109,56 @@ public class PresideAI : MonoBehaviour, IMovementController
         }
     }
 
-    public void AlertPreside(Vector3 playerPosition)
+    void HandlePatrolState()
     {
-        lastKnownPlayerPosition = playerPosition;
-
-        // Cambia lo stato del Preside in Chase se non è già in inseguimento
-        if (currentState != AIState.Chase)
-        {
-            TransitionToState(AIState.Chase);
-            Debug.Log($"Preside avvisato della posizione del giocatore: {playerPosition}");
-        }
-    }
-
-    public void UpdateVisionState(bool canSeeTarget, Transform target)
-    {
-        canSeePlayer = canSeeTarget;
-
-        if (canSeeTarget)
-        {
-            player = target;
-            lastKnownPlayerPosition = target.position;
-            TransitionToState(AIState.Chase);
-        }
-        else if (currentState == AIState.Chase)
-        {
-            TransitionToState(AIState.Alert);
-        }
-    }
-
-    private void HandlePatrolState()
-    {
-        isChasing = false;
-
+        animator.SetBool("isChasing", false);
         if (patrolPoints == null || patrolPoints.Length == 0)
         {
             animator.SetBool("isWalking", false);
             return;
         }
-
         animator.SetBool("isWalking", true);
 
+        // Movimento verso il prossimo patrol point
         Transform target = patrolPoints[currentPatrolIndex];
         MoveTowardsPosition(target.position, normalSpeed);
 
+        // Passa al prossimo punto quando il Preside raggiunge quello attuale
         if (Vector3.Distance(transform.position, target.position) < 0.5f)
         {
             currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
+            Debug.Log("Passa al prossimo patrol point: " + patrolPoints[currentPatrolIndex].name);
         }
     }
 
-    private void HandleChaseState()
+    void HandleChaseState()
     {
-        if (player == null)
+        if (!fieldOfView.CanSeeTarget || fieldOfView.detectedTarget == null)
         {
+            // Se il giocatore non è visibile, passa ad Alert
             TransitionToState(AIState.Alert);
             return;
         }
 
-        animator.SetBool("isWalking", true);
-        float adjustedChaseSpeed = normalSpeed * chaseSpeedMultiplier;
+        // Attiva l'animazione di corsa
+        animator.SetBool("isChasing", true);
 
-        MoveTowardsPosition(lastKnownPlayerPosition, adjustedChaseSpeed);
-
-        if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f && !canSeePlayer)
-        {
-            TransitionToState(AIState.Alert);
-        }
+        // Muovi verso il giocatore
+        MoveTowardsPosition(fieldOfView.detectedTarget.position, normalSpeed * 1.5f); // Velocità aumentata per l'inseguimento
     }
 
-    private void HandleAlertState()
+    void HandleAlertState()
     {
-        isChasing = false;
-
         animator.SetBool("isWalking", false);
 
-        // Incrementa il timer
-        alertTimer += Time.deltaTime;
-
-        // Dopo un certo periodo, torna in stato di Patrol
-        if (alertTimer >= alertDuration)
+        if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f)
         {
-            alertTimer = 0f; // Resetta il timer
             TransitionToState(AIState.Patrol);
         }
     }
 
-    private void HandleInvestigateState()
+    void HandleInvestigateState()
     {
-        isChasing = false;
-        animator.SetBool("isWalking", true);
-
         MoveTowardsPosition(lastKnownPlayerPosition, normalSpeed);
 
         if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 0.5f)
@@ -192,43 +167,209 @@ public class PresideAI : MonoBehaviour, IMovementController
         }
     }
 
-    private void MoveTowardsPosition(Vector3 position, float moveSpeed)
+    void MoveTowardsPosition(Vector3 position, float moveSpeed)
     {
         movementDirection = (position - transform.position).normalized;
 
-        if (Vector3.Distance(transform.position, position) < 0.1f)
+        if (movementDirection.magnitude < 0.1f)
         {
             movementDirection = Vector3.zero;
-            animator.SetBool("isWalking", false);
+            animator.SetBool("isWalking", false); // Ferma l'animazione di camminata
             return;
         }
 
+        // Usa Raycast per rilevare ostacoli davanti al Preside
+        if (Physics.Raycast(transform.position, movementDirection, out RaycastHit hit, 1f))
+        {
+            if (hit.collider != null && hit.collider.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
+            {
+                Debug.Log("Ostacolo rilevato: " + hit.collider.name);
+
+                // Trova una nuova direzione libera
+                movementDirection = FindAlternativeDirection();
+                if (movementDirection == Vector3.zero)
+                {
+                    // Se non trova una direzione libera, ferma il movimento
+                    Debug.Log("Ostacolo bloccante, fermo.");
+                    animator.SetBool("isWalking", false);
+                    return;
+                }
+            }
+        }
+
         RotateTowards(movementDirection);
-        rb.MovePosition(transform.position + movementDirection * moveSpeed * Time.deltaTime);
+
+        // Attiva l'animazione di camminata
+        animator.SetBool("isWalking", true);
+
+        // Muovi il Preside nella direzione calcolata
+        rb.MovePosition(rb.position + movementDirection * moveSpeed * Time.deltaTime);
     }
 
-    private void RotateTowards(Vector3 targetDirection)
+    Vector3 FindAlternativeDirection()
+    {
+        float angleStep = 30f; // Incremento degli angoli
+        int maxChecks = 12; // Numero massimo di direzioni da verificare
+        for (int i = 1; i <= maxChecks; i++)
+        {
+            float angle = i * angleStep;
+
+            // Prova a destra
+            Vector3 rightDirection = Quaternion.Euler(0, angle, 0) * movementDirection;
+            if (!Physics.Raycast(transform.position, rightDirection, 1f))
+            {
+                Debug.Log("Direzione alternativa trovata a destra: " + angle);
+                return rightDirection.normalized;
+            }
+
+            // Prova a sinistra
+            Vector3 leftDirection = Quaternion.Euler(0, -angle, 0) * movementDirection;
+            if (!Physics.Raycast(transform.position, leftDirection, 1f))
+            {
+                Debug.Log("Direzione alternativa trovata a sinistra: " + -angle);
+                return leftDirection.normalized;
+            }
+        }
+
+        // Se tutte le direzioni sono bloccate, restituisci un vettore nullo
+        return Vector3.zero;
+    }
+
+    void RotateTowards(Vector3 targetDirection)
     {
         if (targetDirection != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            rb.rotation = Quaternion.Slerp(rb.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
     }
 
-    public void TransitionToState(AIState newState)
+    void TransitionToState(AIState newState)
     {
         if (currentState == newState) return;
 
-        previousState = currentState;
-        currentState = newState;
-
-        isChasing = (newState == AIState.Chase);
-
-        // Resetta il timer quando si cambia stato
-        if (newState != AIState.Alert)
+        Debug.Log($"Transizione da {currentState} a {newState}");
+        if (newState == AIState.Chase)
         {
-            alertTimer = 0f;
+            animator.SetBool("isChasing", true); 
+            animator.SetBool("isWalking", false); 
+        }
+        else if (newState == AIState.Patrol || newState == AIState.Alert || newState == AIState.Investigate)
+        {
+            animator.SetBool("isChasing", false); 
+            animator.SetBool("isWalking", true); 
+        }
+
+        currentState = newState;
+    }
+
+    void TeleportToNearestWaypoint()
+    {
+        Transform closestWaypoint = FindClosestWaypoint(transform.position);
+        if (closestWaypoint != null)
+        {
+            TeleportToWaypoint(closestWaypoint);
+            Debug.Log("Preside teletrasportato al waypoint più vicino.");
+        }
+        RotateTowards(closestWaypoint.position - transform.position);
+
+        // Cambia lo stato a Patrol dopo il teletrasporto
+        TransitionToState(AIState.Patrol);
+
+        // Reimposta il movimento ai Patrol Points
+        ResetToClosestPatrolPoint(closestWaypoint);
+
+        // Inizia immediatamente a seguire il Patrol Point
+        HandlePatrolState();
+    }
+
+    Transform FindClosestWaypoint(Vector3 position)
+    {
+        Transform closestWaypoint = null;
+        float closestDistance = Mathf.Infinity;
+
+        foreach (Transform waypoint in waypoints)
+        {
+            if (waypoint == null) continue;
+
+            float distance = Vector3.Distance(position, waypoint.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestWaypoint = waypoint;
+            }
+        }
+
+        return closestWaypoint;
+    }
+
+    void TeleportToWaypoint(Transform waypoint)
+    {
+        if (waypoint == null)
+        {
+            Debug.LogError("Waypoint nullo. Impossibile teletrasportarsi.");
+            return;
+        }
+
+        Debug.Log("Teletrasporto al waypoint: " + waypoint.name);
+
+        // Teletrasporta al waypoint
+        if (genSuit != null)
+        {
+            genSuit.position = waypoint.position;
+        }
+        else
+        {
+            transform.position = waypoint.position;
+        }
+
+        RotateTowards(waypoint.position - transform.position);
+
+        // Cambia lo stato a Patrol dopo il teletrasporto
+        TransitionToState(AIState.Patrol);
+
+        // Reimposta il movimento ai Patrol Points
+        ResetToClosestPatrolPoint(waypoint);
+
+        // Inizia immediatamente a seguire il Patrol Point
+        HandlePatrolState();
+    }
+
+    void ResetToClosestPatrolPoint(Transform waypoint)
+    {
+        if (patrolPoints.Length == 0) return;
+
+        float closestDistance = Mathf.Infinity;
+        int closestIndex = 0;
+
+        for (int i = 0; i < patrolPoints.Length; i++)
+        {
+            float distance = Vector3.Distance(patrolPoints[i].position, waypoint.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+
+        currentPatrolIndex = closestIndex;
+        Debug.Log("Ripristinato il punto di pattuglia più vicino: " + patrolPoints[currentPatrolIndex].name);
+    }
+
+    public void ReceiveAlert(Vector3 alertPosition)
+    {
+        Debug.Log("ReceiveAlert chiamato con posizione: " + alertPosition);
+
+        Transform closestWaypoint = FindClosestWaypoint(alertPosition);
+        if (closestWaypoint != null)
+        {
+            Debug.Log("Waypoint più vicino trovato: " + closestWaypoint.name);
+            TeleportToWaypoint(closestWaypoint);
+            TransitionToState(AIState.Alert);
+        }
+        else
+        {
+            Debug.LogWarning("Nessun waypoint trovato.");
         }
     }
 }
