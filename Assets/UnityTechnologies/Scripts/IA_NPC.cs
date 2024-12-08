@@ -17,7 +17,7 @@ public class AdvancedAIFSM : MonoBehaviour
     public float chaseSpeedMultiplier = 1.2f;
 
     [Header("Field of View Reference")]
-    public FieldOfView fieldOfView; // Riferimento allo script FieldOfView
+    public FieldOfView fieldOfView;
 
     [Header("Layers")]
     public LayerMask obstacleLayer;
@@ -77,7 +77,6 @@ public class AdvancedAIFSM : MonoBehaviour
     {
         if (rb == null || animator == null) return;
 
-        // Esegui il movimento in FixedUpdate
         if (movementDirection != Vector3.zero)
         {
             Vector3 newPosition = rb.position + movementDirection * normalSpeed * Time.fixedDeltaTime;
@@ -89,26 +88,23 @@ public class AdvancedAIFSM : MonoBehaviour
     {
         if (rb == null || animator == null || patrolPoints.Length == 0) return;
 
-        // Verifica se l'NPC può inseguire il giocatore
         if (fieldOfView != null && fieldOfView.CanSeeTarget)
         {
             if (fieldOfView.detectedTarget != null && !isChasing)
             {
-                isChasing = true; // Assegna questo NPC all'inseguimento
+                isChasing = true;
                 lastKnownPlayerPosition = fieldOfView.detectedTarget.position;
                 TransitionToState(AIState.Chase);
             }
         }
 
-        // Se non vede più il giocatore, resetta lo stato
         if (isChasing && (fieldOfView.detectedTarget == null || !fieldOfView.CanSeeTarget))
         {
-            isChasing = false; // Rimuove l'NPC dall'inseguimento
+            isChasing = false;
             lastPlayerSpottedTime = Time.time;
             TransitionToState(AIState.Alert);
         }
 
-        // Gestisci lo stato corrente
         switch (currentState)
         {
             case AIState.Patrol:
@@ -141,26 +137,24 @@ public class AdvancedAIFSM : MonoBehaviour
 
     void HandleChaseState()
     {
-        // Imposta direttamente l'animazione della corsa
         animator.SetBool("isChasing", true);
-        Debug.Log("Animazione corsa attivata.");
 
         if (!fieldOfView.CanSeeTarget || fieldOfView.detectedTarget == null)
         {
-            // Se il giocatore non è visibile, torna in Alert
+            animator.SetBool("isChasing", false);
+            movementDirection = Vector3.zero;
             TransitionToState(AIState.Alert);
             return;
         }
 
-        // Muovi verso il giocatore
         MoveTowardsPosition(fieldOfView.detectedTarget.position, normalSpeed * chaseSpeedMultiplier);
-
-        
     }
 
     void HandleAlertState()
     {
+        movementDirection = Vector3.zero;
         animator.SetBool("isWalking", false);
+        animator.SetBool("isChasing", false);
 
         if (Time.time - lastPlayerSpottedTime > Random.Range(2f, 5f))
         {
@@ -185,17 +179,12 @@ public class AdvancedAIFSM : MonoBehaviour
         if (movementDirection.magnitude < 0.1f)
         {
             movementDirection = Vector3.zero;
-            animator.SetBool("isWalking", false); // Ferma l'animazione di camminata
+            animator.SetBool("isWalking", false);
             return;
         }
 
         RotateTowards(movementDirection);
-
-        // Attiva l'animazione di camminata
         animator.SetBool("isWalking", true);
-
-        // Muovi il personaggio
-        rb.MovePosition(transform.position + movementDirection * moveSpeed * Time.fixedDeltaTime);
     }
 
     void RotateTowards(Vector3 targetDirection)
@@ -211,7 +200,8 @@ public class AdvancedAIFSM : MonoBehaviour
     {
         if (currentState == newState) return;
 
-        // Gestisci le animazioni durante la transizione di stato
+        movementDirection = Vector3.zero;
+
         if (newState == AIState.Patrol)
         {
             animator.SetBool("isWalking", true);
@@ -224,7 +214,6 @@ public class AdvancedAIFSM : MonoBehaviour
         }
         else
         {
-            // Reset delle animazioni per stati Alert o Investigate
             animator.SetBool("isWalking", false);
             animator.SetBool("isChasing", false);
         }
