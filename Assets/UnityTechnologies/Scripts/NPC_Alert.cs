@@ -74,6 +74,7 @@ public class NPC_Alert : MonoBehaviour
             // Ottieni la posizione dell'allarme (posizione dell'NPC)
             Vector3 alertPosition = transform.position;
             presideAI.ReceiveAlert(alertPosition);
+            Debug.Log("Il player si trova nella posizione: " + alertPosition.ToString("F2"));
         }
         else
         {

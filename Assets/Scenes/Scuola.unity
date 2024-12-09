@@ -11175,8 +11175,8 @@ MonoBehaviour:
   - {fileID: 1850811405}
   - {fileID: 1632203654}
   patrolPoints:
-  - {fileID: 1548484324}
   - {fileID: 334209387}
+  - {fileID: 2077378209}
   currentState: 0
   normalSpeed: 1.3
   rotationSpeed: 5
@@ -11186,7 +11186,27 @@ MonoBehaviour:
     m_Bits: 128
   npcAlertRadius: 10
   genSuit: {fileID: 578757661}
+  pathPoints:
+  - {fileID: 1548484324}
+  - {fileID: 1927056509}
+  - {fileID: 1978212817}
+  - {fileID: 1446341610}
+  - {fileID: 327730990}
+  - {fileID: 94438989}
+  - {fileID: 964313226}
+  - {fileID: 1156386413}
+  - {fileID: 294193268}
+  - {fileID: 471334761}
+  - {fileID: 2005043820}
+  - {fileID: 1538286746}
+  - {fileID: 35861773}
+  - {fileID: 560752288}
+  - {fileID: 1113485580}
   teleportDistanceThreshold: 25
+  noTeleportRadius: 30
+  maxTeleports: 4
+  player: {fileID: 2083011620}
+  currentMovementMode: 0
 --- !u!4 &578757661 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7658026095892835012, guid: 314b13a2c4f89c74299eabc2a4c725c7,
@@ -27834,7 +27854,7 @@ Transform:
   m_GameObject: {fileID: 1407828074}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.8660254, z: -0.5, w: 0}
-  m_LocalPosition: {x: 66.47, y: 6.928203, z: -12.67}
+  m_LocalPosition: {x: 60.47, y: 6.928203, z: 15.07}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -32151,6 +32171,7 @@ Transform:
   - {fileID: 1978212817}
   - {fileID: 1927056509}
   - {fileID: 334209387}
+  - {fileID: 2077378209}
   - {fileID: 266259380}
   - {fileID: 750975885}
   - {fileID: 1793021229}
@@ -35443,7 +35464,7 @@ PrefabInstance:
     - target: {fileID: 3376064943356706742, guid: f71041fd118fbb34aa9d2dd6a1d96fce,
         type: 3}
       propertyPath: normalSpeed
-      value: 1.8
+      value: 1.3
       objectReference: {fileID: 0}
     - target: {fileID: 3376064943356706742, guid: f71041fd118fbb34aa9d2dd6a1d96fce,
         type: 3}
@@ -35458,7 +35479,7 @@ PrefabInstance:
     - target: {fileID: 3376064943356706742, guid: f71041fd118fbb34aa9d2dd6a1d96fce,
         type: 3}
       propertyPath: chaseSpeedMultiplier
-      value: 2
+      value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 3376064943356706742, guid: f71041fd118fbb34aa9d2dd6a1d96fce,
         type: 3}
@@ -37660,7 +37681,7 @@ Transform:
   m_GameObject: {fileID: 1942374549}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.8660254, z: -0.5, w: 0}
-  m_LocalPosition: {x: 66.47, y: 6.928203, z: -12.67}
+  m_LocalPosition: {x: 60.47, y: 6.928203, z: 15.07}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -39626,7 +39647,7 @@ PrefabInstance:
     - target: {fileID: 6367566384277174298, guid: 87a7b985b15a4244091de35d7df9169a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 66.47
+      value: 60.47
       objectReference: {fileID: 0}
     - target: {fileID: 6367566384277174298, guid: 87a7b985b15a4244091de35d7df9169a,
         type: 3}
@@ -39636,7 +39657,7 @@ PrefabInstance:
     - target: {fileID: 6367566384277174298, guid: 87a7b985b15a4244091de35d7df9169a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -16.67
+      value: 11.07
       objectReference: {fileID: 0}
     - target: {fileID: 6367566384277174298, guid: 87a7b985b15a4244091de35d7df9169a,
         type: 3}
@@ -40440,6 +40461,37 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2075809843}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2077378208
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2077378209}
+  m_Layer: 0
+  m_Name: Patrolpoint1 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2077378209
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2077378208}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.001337177, z: -0, w: 0.9999991}
+  m_LocalPosition: {x: -13.76, y: -5.142134, z: -11.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1661486943}
+  m_LocalEulerAnglesHint: {x: 0, y: 0.153, z: 0}
 --- !u!4 &2083011620 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 966130793678615791, guid: 87a7b985b15a4244091de35d7df9169a,
